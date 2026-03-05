@@ -8,7 +8,8 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User_sw, Personajes, Planetas, Personajesfavoritos, Planetasfavoritos
+from sqlalchemy import select
 #from models import Person
 
 app = Flask(__name__)
@@ -36,14 +37,120 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+
+#B E G I N
+
+@app.route('/user_sw', methods=['GET'])
+def get_users():
+    all_users = User_sw.query.all()
+    #all_users = db.session.execute(select(User_sw)).scalars().all()
+    results = list(map(lambda user: user.serialize(), all_users))
+    return jsonify(results), 200
+
+@app.route('/user_sw/<int:user_id>', methods=['GET'])
+def get_usersw(user_id):
+    user = User_sw.query.filter_by(id=user_id).first()
+    
+    return jsonify(user.serialize()), 200
+
+
+@app.route('/user_sw/favorites', methods=['GET'])
+def get_user_favorites():
+    user = User_sw.query.get(1)
+
+    personajes_fav = list(map(lambda fper: fper.serialize(), user.personajes_fav))
+    planetas_fav = list(map(lambda fpla: fpla.serialize(), user.planetas_fav))
+
+    return jsonify({
+        "usuario": user.username,
+        "personajes_favoritos": personajes_fav,
+        "planetas_favoritos": planetas_fav
+    })
+
+
+@app.route('/personajes', methods=['GET'])
+def get_personajes():
+    all_personajes = Personajes.query.all()
+    results = list(map(lambda personaje: personaje.serialize(), all_personajes))
+    return jsonify(results), 200
+
+@app.route('/personajes/<int:personaje_id>', methods=['GET'])
+def get_personaje(personaje_id):
+    personaje = Personajes.query.get(personaje_id)
+    
+    return jsonify(personaje.serialize()), 200
+
+@app.route('/personajes', methods=['POST'])
+def add_personaje():
+    body = request.get_json()
+    if "nombre" not in body:
+        return "El nombre debe ser enviado", 400
+    if body ["nombre"] == "":
+        return "El nombre no puede quedar vacio", 400
+    personaje = Personajes(**body)
+    db.session.add(personaje)
+    db.session.commit()
+
+    return jsonify(personaje.serialize()), 200
+
+@app.route('/personajes/<int:personaje_id>', methods=['DELETE'])
+def delete_personaje(personaje_id):
+    personaje = db.session.get(Personajes, personaje_id)
+    if personaje is None:
+        return {"msg": "El personaje no existe"}, 404
+
+    db.session.delete(personaje)
+    db.session.commit()
 
     response_body = {
-        "msg": "Hello, this is your GET /user response "
+        "msg" : "Se elimino el personaje"
     }
+        
 
     return jsonify(response_body), 200
+
+
+@app.route('/planetas', methods=['POST'])
+def add_planeta():
+    body = request.get_json()
+    planeta = Planetas(**body)
+    db.session.add(planeta)
+    db.session.commit()
+
+    return jsonify(planeta.serialize()), 200
+
+
+@app.route('/planetas/<int:planeta_id>', methods=['DELETE'])
+def delete_planetas(planeta_id):
+    planeta = db.session.get(Planetas, planeta_id)
+    if planeta is None:
+        return {"msg": "El planeta no existe"}, 404
+
+    db.session.delete(planeta)
+    db.session.commit()
+
+    response_body = {
+        "msg" : "Se elimino el planeta"
+    }
+        
+
+    return jsonify(response_body), 200
+
+
+@app.route('/planetas', methods=['GET'])
+def get_planetas():
+    all_planetas = Planetas.query.all()
+    results = list(map(lambda planeta: planeta.serialize(), all_planetas))
+    return jsonify(results), 200
+
+@app.route('/planetas/<int:planeta_id>', methods=['GET'])
+def get_planeta(planeta_id):
+    planeta = Planetas.query.get(planeta_id)
+    
+    return jsonify(planeta.serialize()), 200
+
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
