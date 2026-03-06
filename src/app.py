@@ -77,6 +77,8 @@ def get_personajes():
 @app.route('/personajes/<int:personaje_id>', methods=['GET'])
 def get_personaje(personaje_id):
     personaje = Personajes.query.get(personaje_id)
+    if personaje is None:
+        return {"msg": "El personaje no existe, bro"}, 404
     
     return jsonify(personaje.serialize()), 200
 
@@ -146,6 +148,8 @@ def get_planetas():
 @app.route('/planetas/<int:planeta_id>', methods=['GET'])
 def get_planeta(planeta_id):
     planeta = Planetas.query.get(planeta_id)
+    if planeta is None:
+        return {"msg": "El planeta no existe, bro"}, 404
     
     return jsonify(planeta.serialize()), 200
 
