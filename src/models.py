@@ -50,6 +50,7 @@ class Personajes (db.Model):
             "id": self.id,
             "nombre": self.nombre,
             "raza": self.raza,
+            "genero": self.genero,
             "color_de_ojos": self.color_de_ojos,
             "color_de_piel": self.color_de_piel
             # do not serialize the password, its a security breach

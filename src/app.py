@@ -68,32 +68,57 @@ def get_user_favorites():
     })
 
 
+
 @app.route('/personajes', methods=['GET'])
 def get_personajes():
     all_personajes = Personajes.query.all()
     results = list(map(lambda personaje: personaje.serialize(), all_personajes))
     return jsonify(results), 200
 
+
 @app.route('/personajes/<int:personaje_id>', methods=['GET'])
 def get_personaje(personaje_id):
     personaje = Personajes.query.get(personaje_id)
     if personaje is None:
-        return {"msg": "El personaje no existe, bro"}, 404
+        return {"msg": "El personaje no existe, mi pana"}, 404
     
     return jsonify(personaje.serialize()), 200
+
 
 @app.route('/personajes', methods=['POST'])
 def add_personaje():
     body = request.get_json()
-    if "nombre" not in body:
-        return "El nombre debe ser enviado", 400
-    if body ["nombre"] == "":
-        return "El nombre no puede quedar vacio", 400
+    campos_requeridos = ["nombre", "raza", "genero", "color_de_ojos", "color_de_piel" ]
+    for campo in campos_requeridos:
+        if campo not in body:
+            return jsonify({"msg": f"El campo {campo} es obligatorio"}), 400
+        if str(body[campo]) == "":
+            return jsonify({"msg": f"El campo {campo} no puede quedar vacio"}), 400
+        
     personaje = Personajes(**body)
     db.session.add(personaje)
     db.session.commit()
 
     return jsonify(personaje.serialize()), 200
+
+
+@app.route('/favoritos/personajes', methods=['POST'])
+def add_personaje_favorito():
+    body = request.get_json()
+
+    personaje = Personajes.query.get(body["personaje_id"])
+    if personaje is None:
+        return jsonify({"msg": "El personaje que intentas agregar no existe"}), 404
+    
+    new_fav = Personajesfavoritos (
+        user_sw_id = 1,
+        personajes_id = body["personaje_id"]
+    )
+    db.session.add(new_fav)
+    db.session.commit()
+
+    return jsonify(new_fav.serialize()), 200
+
 
 @app.route('/personajes/<int:personaje_id>', methods=['DELETE'])
 def delete_personaje(personaje_id):
@@ -108,13 +133,19 @@ def delete_personaje(personaje_id):
         "msg" : "Se elimino el personaje"
     }
         
-
     return jsonify(response_body), 200
 
 
 @app.route('/planetas', methods=['POST'])
 def add_planeta():
     body = request.get_json()
+    campos_requeridos = ["nombre", "poblacion", "terreno", "clima", "diametro" ]
+    for campo in campos_requeridos:
+        if campo not in body:
+            return jsonify({"msg": f"El campo {campo} es obligatorio"}), 400
+        if str(body[campo]) == "":
+            return jsonify({"msg": f"El campo {campo} no puede quedar vacio"}), 400
+        
     planeta = Planetas(**body)
     db.session.add(planeta)
     db.session.commit()
@@ -145,6 +176,7 @@ def get_planetas():
     results = list(map(lambda planeta: planeta.serialize(), all_planetas))
     return jsonify(results), 200
 
+
 @app.route('/planetas/<int:planeta_id>', methods=['GET'])
 def get_planeta(planeta_id):
     planeta = Planetas.query.get(planeta_id)
@@ -153,6 +185,23 @@ def get_planeta(planeta_id):
     
     return jsonify(planeta.serialize()), 200
 
+
+@app.route('/favoritos/planetas', methods=['POST'])
+def add_planeta_favorito():
+    body = request.get_json()
+
+    planeta = Planetas.query.get(body["planeta_id"])
+    if planeta is None:
+        return jsonify({"msg": "El planeta que intentas agregar no existe"}), 404
+    
+    new_fav = Planetasfavoritos (
+        user_sw_id = 1,
+        planetas_id = body["planeta_id"]
+    )
+    db.session.add(new_fav)
+    db.session.commit()
+
+    return jsonify(new_fav.serialize()), 200
 
 
 
